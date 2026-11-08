@@ -1,0 +1,88 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>عسل‌آباد</title>
+<style>
+:root{--honey:#f5a623;--dark:#3b2a14;--cream:#fff6dc}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Tahoma,Vazirmatn,sans-serif;background:var(--dark);color:var(--dark);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+#login{position:fixed;inset:0;background:linear-gradient(160deg,#ffd45e,#f5a623);display:flex;align-items:center;justify-content:center;z-index:9}
+.card{background:var(--cream);padding:24px;border-radius:20px;width:min(90vw,340px);text-align:center;box-shadow:0 10px 30px #0004}
+.card h1{margin:0 0 4px;font-size:34px}.card small{color:#7a5a24}
+input,button{font:inherit;border-radius:12px;border:2px solid #e0b24a;padding:12px;width:100%;margin-top:12px}
+button{background:var(--honey);color:#fff;border-color:var(--honey);font-weight:bold;cursor:pointer}
+#err{color:#c0392b;min-height:20px;margin-top:8px;font-size:14px}
+#top{display:flex;gap:8px;align-items:center;padding:6px 10px;background:#2a1d0d;color:#ffd45e;font-size:14px;flex-wrap:wrap}
+#top b{flex:1}#top select{background:#fff6dc;border:0;border-radius:8px;padding:4px}
+#ann{background:#c0392b;color:#fff;text-align:center;padding:6px;font-size:14px;display:none}
+#stage{flex:1;position:relative;min-height:0}
+canvas{width:100%;height:100%;display:block;background:#8fd16a;touch-action:none}
+#chat{background:#fff6dc;height:34%;min-height:150px;max-height:260px;display:flex;flex-direction:column}
+#msgs{flex:1;overflow-y:auto;padding:6px 10px;font-size:14px}
+#msgs div{margin:2px 0}#msgs b{color:#b8741a}.sys{color:#888;font-style:italic}
+#row{display:flex;gap:6px;padding:6px}#row input{margin:0;flex:1}#row button{margin:0;width:70px}
+#lb{position:absolute;top:6px;left:6px;background:#fff9;border-radius:10px;padding:4px 8px;font-size:12px;cursor:pointer}
+</style></head><body>
+<div id="login"><div class="card"><h1 id="gname">🍯 عسل‌آباد</h1><small id="by"></small>
+<input id="nm" maxlength="16" placeholder="اسمت رو بنویس"><button id="go">ورود به بازی</button><div id="err"></div></div></div>
+<div id="top"><b id="me"></b><span>🍯 <span id="honey">0</span></span><span>⭐ <span id="lvl">1</span></span><span>👥 <span id="on">0</span></span><select id="room"></select></div>
+<div id="ann"></div>
+<div id="stage"><canvas id="cv" width="800" height="520"></canvas><div id="lb">🏆 برترین‌ها</div></div>
+<div id="chat"><div id="msgs"></div><form id="row"><input id="txt" maxlength="200" placeholder="پیام بنویس..." autocomplete="off"><button>ارسال</button></form></div>
+<script>
+const API=(window.ASAL_SERVER||'')+'/api';
+const $=id=>document.getElementById(id);
+let token=localStorage.getItem('aa_token')||'',myId=null,players={},flowers=[],target=null,es,bubbles={};
+const cv=$('cv'),ctx=cv.getContext('2d');
+const post=(p,b)=>fetch(API+p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
+fetch(API+'/config').then(r=>r.json()).then(c=>{document.title=c.gameName;$('gname').textContent='🍯 '+c.gameName;$('by').textContent='سازنده: '+c.creator;
+ $('room').innerHTML=c.rooms.map(r=>`<option>${r}</option>`).join('');window.cfg=c;if(c.announcement)ann(c.announcement)}).catch(()=>$('err').textContent='اتصال به سرور برقرار نیست');
+$('nm').value=localStorage.getItem('aa_name')||'';
+$('go').onclick=async()=>{const name=$('nm').value.trim();const r=await post('/join',{name,token}).catch(()=>({error:'اتصال به سرور برقرار نیست'}));
+ if(r.error){$('err').textContent=r.error;return}
+ token=r.token;localStorage.setItem('aa_token',token);localStorage.setItem('aa_name',name);$('login').style.display='none';$('me').textContent=name;setHoney(r.honey,r.level);connect()};
+function setHoney(h,l){$('honey').textContent=h;$('lvl').textContent=l}
+function ann(t){const a=$('ann');a.textContent='📢 '+t;a.style.display=t?'block':'none';if(t)setTimeout(()=>a.style.display='none',15000)}
+function sys(t){const d=document.createElement('div');d.className='sys';d.textContent=t;$('msgs').appendChild(d);$('msgs').scrollTop=1e9}
+function addMsg(m){const d=document.createElement('div');d.dataset.id=m.id;const b=document.createElement('b');b.textContent=m.name+': ';d.append(b,document.createTextNode(m.text));$('msgs').appendChild(d);$('msgs').scrollTop=1e9}
+function connect(){es=new EventSource(API+'/stream?token='+token);
+ es.addEventListener('init',e=>{const d=JSON.parse(e.data);myId=d.id;players={};d.players.forEach(p=>players[p.id]={...p,tx:p.x,ty:p.y});flowers=d.flowers;$('msgs').innerHTML='';d.history.forEach(addMsg);sys(window.cfg.welcome);setHoney(d.honey,d.me.level);$('room').value=d.me.room});
+ es.addEventListener('join',e=>{const p=JSON.parse(e.data);players[p.id]={...p,tx:p.x,ty:p.y}});
+ es.addEventListener('leave',e=>{delete players[JSON.parse(e.data).id]});
+ es.addEventListener('move',e=>{const d=JSON.parse(e.data),p=players[d.id];if(p){p.tx=d.x;p.ty=d.y}});
+ es.addEventListener('chat',e=>{const m=JSON.parse(e.data);addMsg(m);bubbles[m.from]={t:m.text,e:Date.now()+4000}});
+ es.addEventListener('delMsg',e=>{const d=document.querySelector(`[data-id="${JSON.parse(e.data).id}"]`);if(d)d.remove()});
+ es.addEventListener('flower',e=>{flowers.push(JSON.parse(e.data))});
+ es.addEventListener('flowerGone',e=>{const id=JSON.parse(e.data).id;flowers=flowers.filter(f=>f.id!==id)});
+ es.addEventListener('honey',e=>{const d=JSON.parse(e.data);setHoney(d.honey,d.level)});
+ es.addEventListener('online',e=>$('on').textContent=JSON.parse(e.data).n);
+ es.addEventListener('announce',e=>ann(JSON.parse(e.data).text));
+ es.addEventListener('kicked',e=>{es.close();alert(JSON.parse(e.data).reason);location.reload()});}
+$('room').onchange=()=>post('/act',{id:myId,token,type:'room',room:$('room').value});
+$('row').onsubmit=async e=>{e.preventDefault();const t=$('txt').value.trim();if(!t)return;$('txt').value='';const r=await post('/act',{id:myId,token,type:'chat',text:t});if(r.error)sys(r.error)};
+function pt(e){const r=cv.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return[(t.clientX-r.left)/r.width*800,(t.clientY-r.top)/r.height*520]}
+let lastSent=0;
+cv.onpointerdown=e=>{const[x,y]=pt(e);const f=flowers.find(f=>Math.hypot(f.x-x,f.y-y)<28);target=f?{x:f.x,y:f.y,flower:f.id}:{x,y}};
+function me(){return players[myId]}
+function tick(){const m=me();
+ if(m&&target){const dx=target.x-m.x,dy=target.y-m.y,d=Math.hypot(dx,dy);
+  if(d<6){if(target.flower)post('/act',{id:myId,token,type:'collect',flower:target.flower});target=null}
+  else{m.x+=dx/d*3.2;m.y+=dy/d*3.2;if(Date.now()-lastSent>100){lastSent=Date.now();post('/act',{id:myId,token,type:'move',x:m.x,y:m.y})}}}
+ for(const id in players){const p=players[id];if(id!==myId){p.x+=(p.tx-p.x)*.2;p.y+=(p.ty-p.y)*.2}}
+ draw();requestAnimationFrame(tick)}
+function bee(p,mine){const t=Date.now()/120;ctx.save();ctx.translate(p.x,p.y+Math.sin(t+p.x)*2);
+ ctx.fillStyle='#fff9';ctx.beginPath();ctx.ellipse(-8,-14,9,6,-.5,0,7);ctx.ellipse(8,-14,9,6,.5,0,7);ctx.fill();
+ ctx.fillStyle=`hsl(${p.color},80%,60%)`;ctx.beginPath();ctx.ellipse(0,0,15,19,0,0,7);ctx.fill();
+ ctx.fillStyle='#3b2a14';ctx.fillRect(-15,-4,30,5);ctx.fillRect(-13,6,26,5);
+ ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-5,-9,4,0,7);ctx.arc(5,-9,4,0,7);ctx.fill();ctx.fillStyle='#000';ctx.beginPath();ctx.arc(-5,-9,2,0,7);ctx.arc(5,-9,2,0,7);ctx.fill();
+ ctx.restore();ctx.font='bold 13px Tahoma';ctx.textAlign='center';ctx.fillStyle=mine?'#fff':'#3b2a14';ctx.strokeStyle='#0006';ctx.lineWidth=3;
+ const lab=p.name+' ⭐'+p.level;ctx.strokeText(lab,p.x,p.y+34);ctx.fillText(lab,p.x,p.y+34);
+ const b=bubbles[p.id];if(b&&b.e>Date.now()){ctx.font='13px Tahoma';const w=ctx.measureText(b.t).width+16;ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(p.x-w/2,p.y-62,w,24,8);ctx.fill();ctx.fillStyle='#000';ctx.fillText(b.t.slice(0,40),p.x,p.y-45)}}
+function draw(){ctx.fillStyle='#8fd16a';ctx.fillRect(0,0,800,520);
+ for(let i=0;i<40;i++){ctx.fillStyle=i%2?'#7cc45a':'#9bdb78';ctx.fillRect((i*97)%800,(i*53)%520,26,6)}
+ ctx.font='26px serif';ctx.textAlign='center';
+ for(const f of flowers){ctx.fillText('🌼',f.x,f.y+9)}
+ const room=$('room').value;ctx.font='bold 16px Tahoma';ctx.fillStyle='#fff8';ctx.fillText(room,70,28);
+ Object.values(players).sort((a,b)=>a.y-b.y).forEach(p=>bee(p,p.id===myId))}
+$('lb').onclick=async()=>{const t=await fetch(API+'/top').then(r=>r.json());alert('🏆 برترین زنبورها\n\n'+t.map((u,i)=>`${i+1}. ${u.name} — ${u.honey} 🍯`).join('\n'))};
+tick();
+</script></body></html>

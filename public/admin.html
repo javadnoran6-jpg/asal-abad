@@ -1,0 +1,39 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>پنل مدیریت عسل‌آباد</title>
+<style>
+body{font-family:Tahoma,sans-serif;background:#fff6dc;margin:0;color:#3b2a14}
+header{background:#3b2a14;color:#ffd45e;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+main{padding:12px;max-width:960px;margin:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.stat{background:#fff;border-radius:12px;padding:12px;text-align:center}.stat b{font-size:26px;display:block;color:#b8741a}
+section{background:#fff;border-radius:12px;padding:12px;margin-top:12px}h3{margin:0 0 8px}
+input,textarea,button,select{font:inherit;padding:8px;border-radius:8px;border:1px solid #d8b25a;margin:3px 0}
+input,textarea{width:100%}button{background:#f5a623;color:#fff;border:0;cursor:pointer;padding:8px 12px}button.r{background:#c0392b}button.g{background:#7f8c8d}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:6px;border-bottom:1px solid #eee;text-align:right}
+.scroll{overflow-x:auto}#login{max-width:320px;margin:20vh auto;text-align:center}
+</style></head><body>
+<div id="login"><h2>🍯 ورود مدیر</h2><input id="pw" type="password" placeholder="رمز مدیر"><button onclick="login()" style="width:100%">ورود</button><p id="e" style="color:red"></p></div>
+<div id="app" style="display:none"><header><b>پنل مدیریت</b><button class="g" onclick="localStorage.removeItem('aa_admin');location.reload()">خروج</button></header>
+<main><div class="grid"><div class="stat"><b id="s1">0</b>آنلاین</div><div class="stat"><b id="s2">0</b>کل کاربران</div><div class="stat"><b id="s3">0</b>پیام‌ها</div><div class="stat"><b id="s4">0</b>مسدود</div></div>
+<section><h3>📢 اعلان همگانی</h3><input id="bc" placeholder="متن اعلان"><button onclick="act('broadcast',{text:bc.value});bc.value=''">ارسال به همه</button></section>
+<section><h3>👥 بازیکنان آنلاین</h3><div class="scroll"><table id="pl"></table></div></section>
+<section><h3>💬 آخرین پیام‌ها</h3><div class="scroll"><table id="ms"></table></div></section>
+<section><h3>⛔ مسدودشده‌ها</h3><div class="scroll"><table id="bl"></table></div></section>
+<section><h3>⚙️ تنظیمات بازی</h3>نام بازی<input id="gn">سازنده<input id="cr">پیام خوش‌آمد<input id="wl">
+اتاق‌ها (با ویرگول جدا کنید)<input id="rm">کلمات ممنوع (با ویرگول)<input id="bw">
+<label><input type="checkbox" id="ce" style="width:auto"> چت فعال باشد</label><br><button onclick="saveSet()">ذخیره تنظیمات</button></section></main></div>
+<script>
+let T=localStorage.getItem('aa_admin')||'';const $=id=>document.getElementById(id);
+const api=(p,b)=>fetch('/api/admin/'+p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',Authorization:'Bearer '+T},body:b?JSON.stringify(b):undefined}).then(r=>{if(r.status==401){localStorage.removeItem('aa_admin');location.reload()}return r.json()});
+async function login(){const r=await fetch('/api/admin/login',{method:'POST',body:JSON.stringify({password:$('pw').value})}).then(r=>r.json());if(r.error){$('e').textContent=r.error;return}T=r.token;localStorage.setItem('aa_admin',T);start()}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function act(p,b){await api(p,b);load()}
+async function load(){const d=await api('stats');$('s1').textContent=d.online;$('s2').textContent=d.users;$('s3').textContent=d.messages;$('s4').textContent=d.banned;
+ $('pl').innerHTML='<tr><th>نام</th><th>اتاق</th><th>عملیات</th></tr>'+d.players.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.room)}</td><td><button class="g" onclick="act('mute',{token:'${p.token}',minutes:10})">سکوت ۱۰د</button> <button class="g" onclick="act('kick',{token:'${p.token}'})">اخراج</button> <button class="r" onclick="if(confirm('مسدود شود؟'))act('ban',{token:'${p.token}'})">بن</button></td></tr>`).join('');
+ $('ms').innerHTML=d.recent.map(m=>`<tr><td>${esc(m.name)}</td><td>${esc(m.text)}</td><td><button class="r" onclick="act('deleteMessage',{id:'${m.id}'})">حذف</button></td></tr>`).join('');
+ $('bl').innerHTML=d.banList.map(b=>`<tr><td>${esc(b.name||'?')}</td><td>${esc(b.reason)}</td><td><button onclick="act('unban',{token:'${b.token}'})">رفع بن</button></td></tr>`).join('')||'<tr><td>خالی</td></tr>';
+ if(!window.init){window.init=1;const s=d.settings;$('gn').value=s.gameName;$('cr').value=s.creator;$('wl').value=s.welcome;$('rm').value=s.rooms.join(',');$('bw').value=s.bannedWords.join(',');$('ce').checked=s.chatEnabled}}
+async function saveSet(){await api('settings',{gameName:$('gn').value,creator:$('cr').value,welcome:$('wl').value,rooms:$('rm').value.split(/[,،]/).map(s=>s.trim()),bannedWords:$('bw').value.split(/[,،]/).map(s=>s.trim()),chatEnabled:$('ce').checked});alert('ذخیره شد');}
+function start(){$('login').style.display='none';$('app').style.display='block';load();setInterval(load,5000)}
+if(T)start();
+</script></body></html>

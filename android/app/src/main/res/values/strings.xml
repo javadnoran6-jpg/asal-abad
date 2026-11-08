@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">عسل‌آباد</string>
+    <!-- ⚠️ آدرس سرور خودتان را اینجا بگذارید (با https:// و بدون اسلش آخر) -->
+    <string name="server_url">https://YOUR-SERVER.onrender.com</string>
+</resources>
