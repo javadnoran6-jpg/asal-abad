@@ -109,7 +109,7 @@ fun SignInScreen(
 ) {
     val authUiState by viewModel.authUiState.collectAsState()
     val scrollState = rememberScrollState()
-    val focusManager = LocalFocusManager()
+    val focusManager = LocalFocusManager.current
 
     var selectedTab by remember { mutableIntStateOf(0) } // 0: Login, 1: Register
     var emailText by remember { mutableStateOf("") }
