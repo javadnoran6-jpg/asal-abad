@@ -320,13 +320,16 @@ fun ProfileScreen(
                         )
                     }
 
+                    if (!isViewingCreator) {
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "سن آباد : ${activeProfile.ageDays} روز",
+                        text = "سن آباد : ${if (isViewingCreator) activeProfile.ageDays else com.example.util.AccountAge.days(context)} روز",
                         fontSize = 11.sp,
                         color = Color.Gray
                     )
+
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -338,6 +341,7 @@ fun ProfileScreen(
                     ) {
                         Text(
                             text = activeProfile.bio,
+                            maxLines = if (isViewingCreator) 2 else 6,
                             fontSize = 12.sp,
                             color = Color(0xFF374151),
                             textAlign = TextAlign.Center,
@@ -444,6 +448,7 @@ fun ProfileScreen(
                 }
             }
 
+            if (!isViewingCreator) {
             Spacer(modifier = Modifier.height(12.dp))
 
             // Stats 3-Col Card (الماس | اهدای اختصاصی | اهدای امتیاز)
@@ -478,6 +483,8 @@ fun ProfileScreen(
                 }
             }
 
+            }
+
             Spacer(modifier = Modifier.height(12.dp))
 
             // Primary Profile Buttons (ویرایش پروفایل / پنل مدیریت)
@@ -504,6 +511,7 @@ fun ProfileScreen(
                     }
                 }
 
+                if (!isViewingCreator) {
                 // Owner Admin Panel Button
                 Button(
                     onClick = onOpenAdminPanel,
@@ -520,6 +528,7 @@ fun ProfileScreen(
                         Icon(Icons.Default.Security, contentDescription = null, tint = AsalPurpleDark, modifier = Modifier.size(16.dp))
                         Text("پنل مدیریت مالک 👑", color = AsalPurpleDark, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                     }
+                }
                 }
             }
 
@@ -541,6 +550,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            if (!isViewingCreator) {
             // Profile Settings List (همه دکمه‌ها واقعی کار می‌کنند)
             SettingsSection(title = "حساب اختصاصی ...") {
                 ProfileSettingItem(
@@ -647,6 +657,8 @@ fun ProfileScreen(
                     emoji = "🗑️",
                     onClick = { showDeleteDialog = true }
                 )
+            }
+
             }
 
             Spacer(modifier = Modifier.height(24.dp))

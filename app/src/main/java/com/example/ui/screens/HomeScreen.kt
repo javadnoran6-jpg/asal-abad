@@ -176,7 +176,7 @@ fun HomeScreen(
                         title = "مار پله",
                         tag = "۳۰",
                         modifier = Modifier.weight(1f),
-                        onClick = { onOpenGame(ActiveGame.ROCK_PAPER_SCISSORS) }
+                        onClick = { onOpenGame(ActiveGame.SNAKES_LADDERS) }
                     )
                     GameCard(
                         emoji = "✂️",

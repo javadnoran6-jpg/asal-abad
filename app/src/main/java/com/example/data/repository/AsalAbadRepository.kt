@@ -27,7 +27,7 @@ class AsalAbadRepository {
             level = 4,
             diamonds = 1250,
             janous = 1604,
-            ageDays = 105,
+            ageDays = 0,
             bio = "عاشق چت و بازی در عسل آباد 💜 خوشحال میشم دوست شیم!",
             isVip = true,
             vipRemainingText = "۵ روز و ۱۸ ساعت باقی مانده",
@@ -724,6 +724,16 @@ class AsalAbadRepository {
             it.copy(
                 status = status,
                 statusCustomText = "${status.label} • با مدیریت پریا چش رنگی 👑"
+            )
+        }
+    }
+
+    fun activatePlan(planName: String) {
+        _currentUser.update {
+            it.copy(
+                isVip = true,
+                vipRemainingText = "۳۰ روز باقی مانده (حساب $planName)",
+                badgeSymbol = "👑"
             )
         }
     }

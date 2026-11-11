@@ -42,7 +42,8 @@ enum class ActiveGame {
     NONE,
     ROCK_PAPER_SCISSORS,
     NUMBER_GUESS,
-    WORD_GUESS
+    WORD_GUESS,
+    SNAKES_LADDERS
 }
 
 enum class RpsChoice {
@@ -131,6 +132,7 @@ class AsalAbadViewModel(
 
     fun setApplicationContext(context: android.content.Context) {
         this.appContext = context.applicationContext
+        com.example.util.AccountAge.days(context) // ثبت روز اول (سن = ۰)
         com.example.util.NotificationHelper.initNotificationChannel(context)
     }
 
@@ -274,6 +276,10 @@ class AsalAbadViewModel(
         } else if (game == ActiveGame.WORD_GUESS) {
             resetWordGuessGame()
         }
+    }
+
+    fun rewardDiamonds(amount: Long) {
+        repository.addDiamonds(amount)
     }
 
     fun closeGame() {
@@ -607,6 +613,20 @@ class AsalAbadViewModel(
         showPaymentMethodDialog.value = true
     }
 
+    fun startVipPurchase(planName: String, priceToman: Long) {
+        val formatted = java.text.NumberFormat.getInstance(java.util.Locale.US).format(priceToman) + " تومان"
+        startPaymentFlow(
+            ShopPackage(
+                id = "vip_plan_$planName",
+                originalDiamonds = 0L,
+                doubledDiamonds = 0L,
+                priceToman = priceToman,
+                formattedPrice = formatted,
+                hasBonusWheel = false
+            )
+        )
+    }
+
     fun choosePaymentMethod(isOnlineGateway: Boolean) {
         showPaymentMethodDialog.value = false
         if (isOnlineGateway) {
@@ -618,13 +638,14 @@ class AsalAbadViewModel(
 
     fun completeShaparakPayment(pkg: ShopPackage, cardNumber: String): PurchaseItem {
         val receipt = repository.recordBankPurchase(
-            packageName = "بسته ${pkg.doubledDiamonds} الماس 2X",
+            packageName = if (pkg.id.startsWith("vip_plan_")) "حساب ${pkg.id.removePrefix("vip_plan_")}" else "بسته ${pkg.doubledDiamonds} الماس 2X",
             diamonds = pkg.doubledDiamonds,
             priceToman = pkg.priceToman,
             paymentMethod = "درگاه شاپرک (کارت ...${cardNumber.takeLast(4)})"
         )
         showShaparakGatewayDialog.value = false
         paymentSuccessReceipt.value = receipt
+        if (pkg.id.startsWith("vip_plan_")) repository.activatePlan(pkg.id.removePrefix("vip_plan_"))
 
         postNotification(
             title = "خرید موفق ${pkg.doubledDiamonds} الماس 💎",
@@ -638,7 +659,7 @@ class AsalAbadViewModel(
 
     fun completeCardToCardPayment(pkg: ShopPackage, trackingCode: String): PurchaseItem {
         val receipt = repository.recordBankPurchase(
-            packageName = "بسته ${pkg.doubledDiamonds} الماس 2X (کارت به کارت)",
+            packageName = if (pkg.id.startsWith("vip_plan_")) "حساب ${pkg.id.removePrefix("vip_plan_")} (کارت به کارت)" else "بسته ${pkg.doubledDiamonds} الماس 2X (کارت به کارت)",
             diamonds = pkg.doubledDiamonds,
             priceToman = pkg.priceToman,
             paymentMethod = "کارت به کارت به حساب پریا چش رنگی",
@@ -646,6 +667,7 @@ class AsalAbadViewModel(
         )
         showCardToCardDialog.value = false
         paymentSuccessReceipt.value = receipt
+        if (pkg.id.startsWith("vip_plan_")) repository.activatePlan(pkg.id.removePrefix("vip_plan_"))
 
         postNotification(
             title = "خرید موفق کارت‌به‌کارت 💳",
@@ -738,6 +760,7 @@ class AsalAbadViewModel(
 
     fun deleteAccount(context: android.content.Context) {
         try { java.io.File(context.filesDir, "avatars").deleteRecursively() } catch (_: Throwable) {}
+        com.example.util.AccountAge.reset(context)
         signOut()
     }
 

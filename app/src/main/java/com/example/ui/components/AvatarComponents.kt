@@ -122,10 +122,15 @@ private fun DefaultSilhouette(color: Color, size: androidx.compose.ui.unit.Dp) {
 }
 
 /** عکس انتخاب‌شده از گالری را داخل حافظه برنامه کپی می‌کند تا همیشه در دسترس بماند. */
-fun copyPickedImageToInternal(context: Context, uri: Uri): String? {
+fun copyPickedImageToInternal(
+    context: Context,
+    uri: Uri,
+    dirName: String = "avatars",
+    cleanOld: Boolean = true
+): String? {
     return try {
-        val dir = File(context.filesDir, "avatars").apply { mkdirs() }
-        dir.listFiles()?.forEach { it.delete() }
+        val dir = File(context.filesDir, dirName).apply { mkdirs() }
+        if (cleanOld) dir.listFiles()?.forEach { it.delete() }
         val out = File(dir, "avatar_${System.currentTimeMillis()}.jpg")
         context.contentResolver.openInputStream(uri)?.use { input ->
             out.outputStream().use { input.copyTo(it) }

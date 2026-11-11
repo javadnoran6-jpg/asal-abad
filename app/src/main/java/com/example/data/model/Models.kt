@@ -36,7 +36,7 @@ data class UserProfile(
     val level: Int = 4,
     val diamonds: Long = 1000,
     val janous: Long = 1604,
-    val ageDays: Int = 105,
+    val ageDays: Int = 0,
     val bio: String = "عاشق چت و بازی در عسل آباد 💜",
     val isVip: Boolean = true,
     val vipRemainingText: String = "۵ روز و ۱۸ ساعت باقی مانده",

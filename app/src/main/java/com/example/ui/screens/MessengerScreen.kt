@@ -1405,6 +1405,17 @@ private fun ChatBubbleItem(
                             modifier = Modifier.padding(8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            if (message.mediaUri?.startsWith("/") == true) {
+                                coil.compose.AsyncImage(
+                                    model = java.io.File(message.mediaUri),
+                                    contentDescription = "عکس ارسالی",
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                )
+                            } else
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1791,6 +1802,34 @@ private fun MediaAttachmentDialog(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (selectedTab == 0) {
+                    val ctx = androidx.compose.ui.platform.LocalContext.current
+                    val pickLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                        androidx.activity.result.contract.ActivityResultContracts.GetContent()
+                    ) { picked: android.net.Uri? ->
+                        if (picked != null) {
+                            val path = com.example.ui.components.copyPickedImageToInternal(
+                                ctx, picked, dirName = "chat_images", cleanOld = false
+                            )
+                            if (path != null) {
+                                onSendImage(path, captionInput)
+                            } else {
+                                android.widget.Toast.makeText(ctx, "خواندن عکس ممکن نشد", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                    Button(
+                        onClick = { pickLauncher.launch("image/*") },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEDE4FA)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("🖼️ انتخاب عکس از گالری گوشی", color = AsalPurplePrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Caption
@@ -1877,6 +1916,17 @@ private fun PhotoPreviewDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                if (uri.startsWith("/")) {
+                    coil.compose.AsyncImage(
+                        model = java.io.File(uri),
+                        contentDescription = "عکس",
+                        contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(360.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                    )
+                } else
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

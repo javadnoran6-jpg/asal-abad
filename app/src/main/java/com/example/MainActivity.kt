@@ -222,6 +222,12 @@ fun AsalAbadMainApp(
                         onBack = { viewModel.closeGame() }
                     )
                 }
+                ActiveGame.SNAKES_LADDERS -> {
+                    com.example.ui.screens.games.SnakesLaddersGameScreen(
+                        onWin = { viewModel.rewardDiamonds(it) },
+                        onBack = { viewModel.closeGame() }
+                    )
+                }
                 ActiveGame.NONE -> {}
             }
         } else {
@@ -406,7 +412,10 @@ fun AsalAbadMainApp(
     // VIP Dialog
     if (showVipInfoDialog) {
         VipInfoDialog(
-            onBuyVip = { viewModel.buyVipAccount() },
+            onBuyPlan = { name, price ->
+                viewModel.startVipPurchase(name, price)
+                viewModel.showVipInfoDialog.value = false
+            },
             onDismiss = { viewModel.showVipInfoDialog.value = false }
         )
     }

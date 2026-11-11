@@ -134,7 +134,7 @@ fun PaymentMethodDialog(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "خرید ${pkg.doubledDiamonds} الماس عسل آباد 💎",
+                                text = if (pkg.id.startsWith("vip_plan_")) "خرید حساب ${pkg.id.removePrefix("vip_plan_")} عسل آباد 👑" else "خرید ${pkg.doubledDiamonds} الماس عسل آباد 💎",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = AsalPurplePrimary
@@ -976,7 +976,7 @@ fun PaymentSuccessReceiptDialog(
                     )
 
                     Text(
-                        text = "${receipt.diamondsGranted} الماس به کیف پول شما واریز گردید.",
+                        text = if (receipt.diamondsGranted == 0L) "حساب شما فعال شد ✅" else "${receipt.diamondsGranted} الماس به کیف پول شما واریز گردید.",
                         fontSize = 13.sp,
                         color = AsalPurplePrimary,
                         fontWeight = FontWeight.Bold

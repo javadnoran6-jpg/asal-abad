@@ -31,6 +31,8 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -1155,7 +1157,7 @@ fun GroupMarketDialog(
 // -------------------------------------------------------------
 @Composable
 fun VipInfoDialog(
-    onBuyVip: () -> Unit,
+    onBuyPlan: (planName: String, priceToman: Long) -> Unit,
     onDismiss: () -> Unit
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -1170,75 +1172,84 @@ fun VipInfoDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
                         .padding(18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "حساب اختصاصی 👑",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AsalPurpleDark
-                    )
+                    Text("خرید حساب 👑", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = AsalPurpleDark)
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "مدت اعتبار: ۱۴ روز",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AsalPurplePrimary
-                    )
-
+                    Text("مدت اعتبار هر حساب: ۳۰ روز", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AsalPurplePrimary)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    val features = listOf(
-                        "• گذاشتن بیوگرافی شخصی",
-                        "• استفاده از نمادها و بج‌های ویژه",
-                        "• تغییر رنگ و پس‌زمینه پیام‌ها",
-                        "• تغییر حالت آخرین بازدید (مخفی/عمومی)",
-                        "• ارسال عکس و فایل در پی‌وی و گروه‌ها",
-                        "• گردونه اختصاصی با شانس برنده شدن ۲ برابر"
+                    VipPlanCard(
+                        title = "حساب ویژه ✨",
+                        price = "۲۰,۰۰۰ تومان",
+                        features = listOf("• بیوگرافی شخصی", "• بج‌های ویژه", "• ارسال عکس در پی‌وی و گروه"),
+                        accent = Color(0xFFA855F7),
+                        onBuy = { onBuyPlan("ویژه", 20000L) }
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    VipPlanCard(
+                        title = "حساب اختصاصی 👑",
+                        price = "۳۵,۰۰۰ تومان",
+                        features = listOf(
+                            "• همه امکانات حساب ویژه",
+                            "• تغییر رنگ و پس‌زمینه پیام‌ها",
+                            "• مخفی کردن آخرین بازدید",
+                            "• گردونه اختصاصی با شانس ۲ برابر"
+                        ),
+                        accent = AsalGold,
+                        onBuy = { onBuyPlan("اختصاصی", 35000L) }
                     )
 
-                    features.forEach { feat ->
-                        Text(
-                            text = feat,
-                            fontSize = 13.sp,
-                            color = Color(0xFF333333),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 3.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "توجه: با خرید حساب اختصاصی، زمان باقی‌مانده تمدید می‌شود.",
+                        text = "پرداخت از طریق درگاه یا کارت به کارت انجام می‌شود.",
                         fontSize = 11.sp,
                         color = Color.Gray,
                         textAlign = TextAlign.Center
                     )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        TextButton(onClick = onDismiss) {
-                            Text("بستن", color = AsalPurplePrimary)
-                        }
-                        Button(
-                            onClick = {
-                                onBuyVip()
-                                onDismiss()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = AsalPurplePrimary),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("خرید (۲۰۰۰ الماس)", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
-                    }
+                    TextButton(onClick = onDismiss) { Text("بستن", color = AsalPurplePrimary) }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun VipPlanCard(
+    title: String,
+    price: String,
+    features: List<String>,
+    accent: Color,
+    onBuy: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFAF5FF)),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, accent),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AsalPurpleDark)
+                Text(price, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = AsalPurplePrimary)
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            features.forEach {
+                Text(it, fontSize = 12.sp, color = Color(0xFF333333), modifier = Modifier.padding(vertical = 2.dp))
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onBuy,
+                colors = ButtonDefaults.buttonColors(containerColor = AsalPurplePrimary),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("خرید $title", color = Color.White, fontWeight = FontWeight.Bold) }
         }
     }
 }
