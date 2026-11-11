@@ -5,6 +5,9 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -33,3 +36,12 @@ jobs:
         name: AsalAbad-APK
         path: app/build/outputs/apk/debug/app-debug.apk
         if-no-files-found: error
+
+    - name: Publish Release for users
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        cp app/build/outputs/apk/debug/app-debug.apk AsalAbad.apk
+        gh release create "v1.1-build${{ github.run_number }}" AsalAbad.apk \
+          --title "عسل آباد نسخه 1.1 (ساخت ${{ github.run_number }})" \
+          --notes "دانلود و نصب فایل AsalAbad.apk"
